@@ -1,4 +1,3 @@
-package com.citigroup.nam.disputes;
 
 import java.io.File;
 import java.io.FileInputStream;
