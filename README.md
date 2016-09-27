@@ -10,3 +10,9 @@ The script credits are given to [Vineet Naik](https://github.com/naiquevin)
 ##C  
 
 1.Pascal's Triangle
+
+##Java
+
+1.Reading Xls file in java
+2.Reading Xlsx file in java
+3.Writing to xls file using jxls library.
