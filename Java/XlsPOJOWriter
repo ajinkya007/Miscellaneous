@@ -1,0 +1,69 @@
+
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.jxls.template.SimpleExporter;
+
+public class App3 {
+
+	private static final Logger LOGGER = Logger.getLogger(App3.class);
+
+	public static void main(String[] args) {
+		List<App3.Demo> list = App3.generateList();
+		App3.generateXls(list);
+		System.out.println(list.size());
+	}
+
+	private static List<Demo> generateList() {
+		// TODO Auto-generated method stub
+		List<App3.Demo> list = new ArrayList<App3.Demo>();
+		App3 app = new App3();
+		list.add(app.new Demo("Ajinkya"));
+		list.add(app.new Demo("Aj"));
+		list.add(app.new Demo("aj007"));
+		
+		return list;
+	}
+
+	public static void generateXls(List<App3.Demo> list) {
+
+		try {
+			OutputStream os = new FileOutputStream("target/Example.xls");
+			SimpleExporter exporter = new SimpleExporter();
+			List<String> headers = Arrays.asList("User");
+			exporter.gridExport(headers, list, "user", os);
+			System.out.println("File successfully created.");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			LOGGER.error(e.getMessage());
+		}
+	}
+
+	public class Demo {
+		String user;
+
+		public Demo(String user) {
+			this.user = user;
+		}
+
+		/**
+		 * @return the user
+		 */
+		public String getUser() {
+			return user;
+		}
+
+		/**
+		 * @param user
+		 *            the user to set
+		 */
+		public void setUser(String user) {
+			this.user = user;
+		}
+	}
+}
