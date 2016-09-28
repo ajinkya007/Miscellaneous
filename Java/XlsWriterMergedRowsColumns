@@ -1,0 +1,129 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jxls.template.SimpleExporter;
+
+public class App4 {
+
+	private static final Logger LOGGER = Logger.getLogger(App4.class);
+
+	public static void main(String[] args) {
+		List<App4.Demo> list = App4.generateListFromFile();
+		App4.generateXls(list);
+		System.out.println(list.size());
+	}
+
+	private static List<Demo> generateList() {
+		// TODO Auto-generated method stub
+		List<App4.Demo> list = new ArrayList<App4.Demo>();
+		App4 app = new App4();
+		list.add(app.new Demo("Ajinkya"));
+		list.add(app.new Demo("Aj"));
+		list.add(app.new Demo("aj007"));
+
+		return list;
+	}
+
+	private static List<Demo> generateListFromFile() {
+		// TODO Auto-generated method stub
+		List<Demo> list = new ArrayList<Demo>();
+		try {
+			FileInputStream file = new FileInputStream(new File("./src/main/resources/Example.xlsx"));
+			// Create Workbook instance holding reference to .xlsx file
+			XSSFWorkbook workbook = new XSSFWorkbook(file);
+
+			// Get first/desired sheet from the workbook
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			int FIRST_ROW_TO_GET = 1; // 0 based
+			App4 app = new App4();
+			for (int rownum = FIRST_ROW_TO_GET; rownum <= sheet.getLastRowNum(); rownum++) {
+				Row row = sheet.getRow(rownum);
+				list.add(App4.assignDemo(row, app, sheet));
+			}
+			workbook.close();
+			file.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e.getMessage());
+		}
+
+		return list;
+	}
+
+	private static Demo assignDemo(Row row, App4 app, XSSFSheet sheet) {
+		// TODO Auto-generated method stub
+		outer: for (int j = 0; j < row.getLastCellNum(); j++) {
+			Cell cell = row.getCell(j);
+
+			// will iterate over the Merged cells
+			for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
+
+				// Region of merged cells
+				CellRangeAddress region = sheet.getMergedRegion(i);
+
+				// number of columns merged
+				int colIndex = region.getFirstColumn();
+				// number of rows merged
+				int rowNum = region.getFirstRow();
+				if (region.containsRow(cell.getRowIndex()) && region.containsColumn(cell.getColumnIndex())) {
+					cell.setCellValue(sheet.getRow(rowNum).getCell(colIndex).getStringCellValue());
+					continue outer;
+				}
+			}
+		}
+		Demo demo = app.new Demo(row.getCell(0, MissingCellPolicy.RETURN_BLANK_AS_NULL) == null ? "null"
+				: row.getCell(0, MissingCellPolicy.RETURN_BLANK_AS_NULL).toString());
+
+		return demo;
+	}
+
+	public static void generateXls(List<App4.Demo> list) {
+
+		try {
+			OutputStream os = new FileOutputStream("target/Example.xls");
+			SimpleExporter exporter = new SimpleExporter();
+			List<String> headers = Arrays.asList("User");
+			exporter.gridExport(headers, list, "user", os);
+			System.out.println("File successfully created.");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			LOGGER.error(e.getMessage());
+		}
+	}
+
+	public class Demo {
+		String user;
+
+		public Demo(String user) {
+			this.user = user;
+		}
+
+		/**
+		 * @return the user
+		 */
+		public String getUser() {
+			return user;
+		}
+
+		/**
+		 * @param user
+		 *            the user to set
+		 */
+		public void setUser(String user) {
+			this.user = user;
+		}
+	}
+}
