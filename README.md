@@ -17,3 +17,4 @@ The script credits are given to [Vineet Naik](https://github.com/naiquevin)
 2.Reading Xlsx file in java.    
 3.Writing to xls file using jxls library.    
 4.Writing to xls sheet with merged cells in input xls.  
+5.Writing to xls sheet with merged cells and formula in input xls.
