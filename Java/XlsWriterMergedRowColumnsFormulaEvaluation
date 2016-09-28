@@ -1,0 +1,143 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jxls.template.SimpleExporter;
+
+public class App5 {
+
+	private static final Logger LOGGER = Logger.getLogger(App5.class);
+
+	public static void main(String[] args) {
+		List<App5.Demo> list = App5.generateListFromFile();
+		App5.generateXls(list);
+		System.out.println(list.size());
+	}
+
+	private static List<Demo> generateList() {
+		// TODO Auto-generated method stub
+		List<App5.Demo> list = new ArrayList<App5.Demo>();
+		App5 app = new App5();
+		list.add(app.new Demo("Ajinkya"));
+		list.add(app.new Demo("Aj"));
+		list.add(app.new Demo("aj007"));
+
+		return list;
+	}
+
+	private static List<Demo> generateListFromFile() {
+		// TODO Auto-generated method stub
+		List<Demo> list = new ArrayList<Demo>();
+		try {
+			FileInputStream file = new FileInputStream(new File("./src/main/resources/Example.xlsx"));
+			// Create Workbook instance holding reference to .xlsx file
+			XSSFWorkbook workbook = new XSSFWorkbook(file);
+
+			// Get first/desired sheet from the workbook
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			int FIRST_ROW_TO_GET = 1; // 0 based
+			App5 app = new App5();
+			for (int rownum = FIRST_ROW_TO_GET; rownum <= sheet.getLastRowNum(); rownum++) {
+				Row row = sheet.getRow(rownum);
+				row = App5.rowComputations(workbook, sheet, row);
+				list.add(App5.assignDemo(row, app));
+			}
+			workbook.close();
+			file.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e.getMessage());
+		}
+
+		return list;
+	}
+
+	public static Row rowComputations(XSSFWorkbook workbook, XSSFSheet sheet, Row row) {
+		// Set Values where Merged Cells exist and compute formula cells
+		FormulaEvaluator eval = workbook.getCreationHelper().createFormulaEvaluator();
+		outer: for (int i = 0; i < row.getLastCellNum(); i++) {
+			Cell cell = row.getCell(i);
+
+			// will iterate over the Merged cells
+			for (int j = 0; j < sheet.getNumMergedRegions(); j++) {
+
+				// Region of merged cells
+				CellRangeAddress region = sheet.getMergedRegion(j);
+
+				// number of columns merged
+				int colIndex = region.getFirstColumn();
+				// number of rows merged
+				int rowNum = region.getFirstRow();
+				if (region.containsRow(cell.getRowIndex()) && region.containsColumn(cell.getColumnIndex())) {
+					if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)
+						cell.setCellValue(String.valueOf(sheet.getRow(rowNum).getCell(colIndex).getNumericCellValue()));
+					else
+						cell.setCellValue(sheet.getRow(rowNum).getCell(colIndex).getStringCellValue());
+					continue outer;
+				}
+			}
+			// Evaluate the formula and write the value in the cell itself
+			eval.evaluateInCell(cell);
+		}
+
+		return row;
+	}
+
+	private static Demo assignDemo(Row row, App5 app) {
+		// TODO Auto-generated method stub
+		Demo demo = app.new Demo(row.getCell(0, MissingCellPolicy.RETURN_BLANK_AS_NULL) == null ? "null"
+				: row.getCell(0, MissingCellPolicy.RETURN_BLANK_AS_NULL).toString());
+
+		return demo;
+	}
+
+	public static void generateXls(List<App5.Demo> list) {
+
+		try {
+			OutputStream os = new FileOutputStream("target/Example.xls");
+			SimpleExporter exporter = new SimpleExporter();
+			List<String> headers = Arrays.asList("User");
+			exporter.gridExport(headers, list, "user", os);
+			System.out.println("File successfully created.");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			LOGGER.error(e.getMessage());
+		}
+	}
+
+	public class Demo {
+		String user;
+
+		public Demo(String user) {
+			this.user = user;
+		}
+
+		/**
+		 * @return the user
+		 */
+		public String getUser() {
+			return user;
+		}
+
+		/**
+		 * @param user
+		 *            the user to set
+		 */
+		public void setUser(String user) {
+			this.user = user;
+		}
+	}
+}
